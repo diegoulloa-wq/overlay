@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Goal Ring — Minimal v6 (Bright)</title>
+  <style>
+    /* Fuente más "cuadrada" */
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&display=swap');
+
+    :root{
+      --bg: transparent;
+      --border: rgba(255,255,255,0.16);
+      --text: rgba(255,255,255,0.94);
+      --muted: rgba(255,255,255,0.72);
+
+      /* Verde más luminoso */
+      --ringTrack: rgba(255,255,255,0.12);
+      --ringMain: rgba(0, 255, 140, 1.00);
+      --ringGlow: rgba(0, 255, 170, 0.45);
+
+      --pillBg: rgba(0,0,0,0.28);
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      background:transparent;
+      font-family: "Orbitron", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .wrap{ height:100%; display:grid; place-items:center; }
+
+    .card{
+      width: 300px;
+      height: 210px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+      backdrop-filter: blur(12px);
+      position:relative;
+      overflow:hidden;
+      padding: 10px;
+      box-sizing:border-box;
+    }
+
+    .card::before{ display:none; }
+
+    .inner{
+      position:relative;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap: 6px;
+    }
+
+    .ringWrap{
+      margin-top: 4px;
+      width: 150px;
+      height: 150px;
+      position:relative;
+      display:grid;
+      place-items:center;
+    }
+
+    svg{ overflow:visible; display:block; }
+
+    .track{
+      stroke: var(--ringTrack);
+      stroke-width: 10;
+      fill:none;
+    }
+
+    .progress{
+      stroke: var(--ringMain);
+      stroke-width: 10;
+      fill:none;
+      stroke-linecap: round;
+      /* glow más fuerte */
+      filter:
+        drop-shadow(0 0 10px rgba(0,255,170,0.55))
+        drop-shadow(0 0 18px rgba(0,255,170,0.35))
+        drop-shadow(0 0 28px rgba(0,255,170,0.18));
+      transform: rotate(-90deg);
+      transform-origin: 80px 80px;
+      transition: stroke-dashoffset 520ms cubic-bezier(.2,.9,.2,1);
+    }
+
+    .center{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding: 0 22px;
+      box-sizing:border-box;
+    }
+
+    .pct{
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      color: var(--text);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 2px 18px rgba(0,0,0,0.30);
+    }
+
+    /* Números debajo del círculo (más grandes) */
+    .below{
+      margin-top: -4px;
+      font-size: 16px;      /* + grande */
+      font-weight: 900;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
+      text-shadow: 0 2px 18px rgba(0,0,0,0.25);
+      white-space: nowrap;
+    }
+    .below .sep{ opacity:.55; font-weight: 800; }
+
+    /* FOLLOW más grande */
+    .ctaBottom{
+      margin-top: -2px;
+      font-size: 13px;      /* + grande */
+      font-weight: 900;
+      letter-spacing: 2.0px;
+      color: rgba(0,255,170,0.98);
+      text-transform: uppercase;
+      text-shadow:
+        0 0 14px rgba(0,255,170,0.22),
+        0 0 26px rgba(0,255,170,0.14);
+    }
+
+    .footer{
+      width:100%;
+      margin-top: auto;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .pill{
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: var(--pillBg);
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 130px;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif; /* pills más sobrios */
+      letter-spacing: .2px;
+    }
+
+    .pill.ok{ color: rgba(0,255,170,0.90); }
+    .pill.err{ color: rgba(255,100,100,0.92); }
+
+    .bump{ animation: bump 520ms cubic-bezier(.2,.9,.2,1); }
+    @keyframes bump{
+      0%{ transform: scale(1); }
+      35%{ transform: scale(1.04); }
+      100%{ transform: scale(1); }
+    }
+    .pulseGlow{ animation: pulseGlow 700ms ease-out; }
+    @keyframes pulseGlow{
+      0%{ box-shadow: 0 18px 50px rgba(0,0,0,0.35); }
+      45%{ box-shadow: 0 18px 50px rgba(0,0,0,0.35), 0 0 32px rgba(0,255,170,0.22); }
+      100%{ box-shadow: 0 18px 50px rgba(0,0,0,0.35); }
+    }
+
+    .error{
+      position:absolute;
+      left:14px; right:14px; top:12px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.92);
+      background: rgba(200,30,30,0.30);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 14px;
+      padding: 8px 10px;
+      display:none;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="card" aria-label="Meta de seguidores">
+      <div class="error" id="err"></div>
+
+      <div class="inner">
+        <div class="ringWrap" id="ringWrap">
+          <svg width="140" height="140" viewBox="0 0 160 160" aria-hidden="true">
+            <circle class="track" cx="80" cy="80" r="60"></circle>
+            <circle class="progress" id="ring" cx="80" cy="80" r="60"></circle>
+          </svg>
+
+          <div class="center">
+            <div class="pct" id="pct">—%</div>
+          </div>
+        </div>
+
+        <div class="below"><span id="current">—</span> <span class="sep">/</span> <span id="goal">—</span></div>
+
+        <div class="ctaBottom">FOLLOW!</div>
+
+        <div class="footer">
+          <span class="pill" id="who">@lyglol</span>
+          <span class="pill ok" id="st">…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const GOAL_FOLLOWERS = 1700;
+
+  const API_BASE = "https://tiktok-followers-api.onrender.com";
+  const API_PATH = "/tiktok/followers";
+
+  const REFRESH_MS = 15000;
+  const TIMEOUT_MS = 8000;
+  const MAX_RETRIES = 2;
+
+  const card = document.getElementById("card");
+  const ring = document.getElementById("ring");
+  const elPct = document.getElementById("pct");
+  const elCurrent = document.getElementById("current");
+  const elGoal = document.getElementById("goal");
+  const elSt = document.getElementById("st");
+  const elErr = document.getElementById("err");
+  const ringWrap = document.getElementById("ringWrap");
+
+  const r = 60;
+  const C = 2 * Math.PI * r;
+  ring.style.strokeDasharray = `${C} ${C}`;
+  ring.style.strokeDashoffset = `${C}`;
+
+  function formatNumber(n){
+    try { return new Intl.NumberFormat("es-CL").format(n); }
+    catch { return String(n); }
+  }
+
+  function setStatus(kind, text){
+    elSt.classList.remove("ok","err");
+    if(kind) elSt.classList.add(kind);
+    elSt.textContent = text;
+  }
+
+  function showError(msg){
+    elErr.style.display = "block";
+    elErr.textContent = msg;
+  }
+  function clearError(){
+    elErr.style.display = "none";
+    elErr.textContent = "";
+  }
+
+  function setProgress(current){
+    const pct = Math.max(0, Math.min(1, current / GOAL_FOLLOWERS));
+    const dash = C - (pct * C);
+
+    ring.style.strokeDashoffset = String(dash);
+
+    elPct.textContent = Math.round(pct * 100) + "%";
+    elCurrent.textContent = formatNumber(current);
+    elGoal.textContent = formatNumber(GOAL_FOLLOWERS);
+
+    if (current >= GOAL_FOLLOWERS){
+      setStatus("ok","meta!");
+    }
+  }
+
+  async function fetchWithTimeout(url, timeoutMs){
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    try{
+      return await fetch(url, { cache: "no-store", signal: ctrl.signal });
+    } finally { clearTimeout(t); }
+  }
+
+  function xhrJson(url, timeoutMs){
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open("GET", url, true);
+      x.timeout = timeoutMs;
+      x.onreadystatechange = () => {
+        if (x.readyState === 4) {
+          try {
+            const j = JSON.parse(x.responseText || "{}");
+            resolve({ ok: (x.status >= 200 && x.status < 300), status: x.status, json: j });
+          } catch (e) { reject(new Error("XHR JSON parse error: " + e)); }
+        }
+      };
+      x.ontimeout = () => reject(new Error("XHR timeout"));
+      x.onerror = () => reject(new Error("XHR network error"));
+      x.send();
+    });
+  }
+
+  let lastValue = null;
+
+  function animateFollowerUp(){
+    ringWrap.classList.remove("bump");
+    card.classList.remove("pulseGlow");
+    void ringWrap.offsetWidth;
+    ringWrap.classList.add("bump");
+    card.classList.add("pulseGlow");
+  }
+
+  async function tick(){
+    setStatus("ok","upd");
+    clearError();
+
+    const url = API_BASE + API_PATH + "?t=" + Date.now();
+    let lastErr = null;
+
+    for(let attempt=0; attempt<=MAX_RETRIES; attempt++){
+      try{
+        try{
+          const r = await fetchWithTimeout(url, TIMEOUT_MS);
+          const j = await r.json().catch(() => ({}));
+          if(!r.ok || !j.ok) throw new Error(`HTTP ${r.status}\n${JSON.stringify(j, null, 2)}`);
+
+          const n = j.followers;
+          if(typeof n !== "number") throw new Error(`Respuesta sin followers numérico:\n${JSON.stringify(j, null, 2)}`);
+
+          if (typeof lastValue === "number" && n > lastValue) animateFollowerUp();
+          lastValue = n;
+
+          setProgress(n);
+          if(n < GOAL_FOLLOWERS) setStatus("ok","ok");
+          return;
+
+        } catch (fetchErr){
+          const msg = String(fetchErr || "");
+          if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("AbortError")) {
+            const xr = await xhrJson(url, TIMEOUT_MS);
+            if(!xr.ok || !xr.json.ok) throw new Error(`XHR HTTP ${xr.status}\n${JSON.stringify(xr.json, null, 2)}`);
+
+            const n = xr.json.followers;
+            if(typeof n !== "number") throw new Error(`XHR respuesta sin followers numérico:\n${JSON.stringify(xr.json, null, 2)}`);
+
+            if (typeof lastValue === "number" && n > lastValue) animateFollowerUp();
+            lastValue = n;
+
+            setProgress(n);
+            if(n < GOAL_FOLLOWERS) setStatus("ok","ok");
+            return;
+          }
+          throw fetchErr;
+        }
+      } catch(e){
+        lastErr = e;
+        await new Promise(res => setTimeout(res, 450 * (attempt + 1)));
+      }
+    }
+
+    setStatus("err","err");
+    showError(String(lastErr));
+  }
+
+  setProgress(0);
+  tick();
+  setInterval(tick, REFRESH_MS);
+</script>
+</body>
+</html>
